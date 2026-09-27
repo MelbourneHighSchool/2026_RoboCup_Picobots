@@ -2,11 +2,3 @@ __pycache__/
 *.pyc
 calibration.json
 deadzone_reference.jpg
-
-# Kept locally for reference/development, not pushed to GitHub —
-# only the Picobots/ folder is meant to be public.
-old code/
-reference/
-camera.html
-requirements.txt
-CLAUDE.md
