@@ -15,6 +15,8 @@ ball_angle = 0.0
 ball_area = 0.0
 ball_visible = False
 
+deadzone = cv2.imread('deadzone_mask.png', cv2.IMREAD_GRAYSCALE)
+
 
 def setup_camera():
     """Start the camera and load calibration.json."""
@@ -48,10 +50,11 @@ def read_frame(picam):
 
 def detect_ball(frame, lower, upper, distance_scale=None):
     """Find the biggest orange blob and draw a line to it."""
-    global ball_angle, ball_area, ball_visible
+    global ball_angle, ball_area, ball_visible, deadzone
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)  # orange = white
+    # mask = cv2.bitwise_and(deadzone, mask, mask=None)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     height, width = frame.shape[:2]
@@ -71,5 +74,8 @@ def detect_ball(frame, lower, upper, distance_scale=None):
 
             cv2.drawContours(frame, [ball], -1, (0, 255, 255), 2)
             cv2.line(frame, (cx, cy), (bx, by), (255, 0, 0), 2)
+
+    print(mask.shape)
+    print(deadzone.shape)
 
     return frame
