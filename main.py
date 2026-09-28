@@ -3,10 +3,8 @@
 import asyncio
 import signal
 import sys
-
 import cv2
 import websockets
-
 import motors
 import movement
 import vision
@@ -51,7 +49,7 @@ async def stream_cam(picam, lower, upper, distance_scale):
         success, image_data = cv2.imencode(".jpg", preview, encode_params)
         if success and clients:
             jpg = image_data.tobytes()
-            await asyncio.gather(*[c.send(jpg) for c in clients])
+            await asyncio.gather(*[client.send(jpg) for client in clients])
 
         await asyncio.sleep(0.03)
 
@@ -69,20 +67,20 @@ async def motor_task():
             blind_spot_ticks_left = 0
 
         else:
-            if was_visible and vision.ball_area > BLIND_SPOT_AREA_THRESHOLD:
-                # Probably went under the plate
-                blind_spot_ticks_left = BLIND_SPOT_MAX_TICKS
-                ticks_in_recovery = 0
+            # if was_visible and vision.ball_area > BLIND_SPOT_AREA_THRESHOLD:
+            #     # Probably went under the plate
+            #     blind_spot_ticks_left = BLIND_SPOT_MAX_TICKS
+            #     ticks_in_recovery = 0
 
-            if blind_spot_ticks_left > 0:
-                if ticks_in_recovery % BLIND_SPOT_SWITCH_TICKS == 0:
-                    nudge_toward_left = not nudge_toward_left
-                offset = -BLIND_SPOT_NUDGE_ANGLE if nudge_toward_left else BLIND_SPOT_NUDGE_ANGLE
-                movement.move(vision.ball_angle + offset, BLIND_SPOT_NUDGE_SPEED)
-                blind_spot_ticks_left -= 1
-                ticks_in_recovery += 1
-            else:
-                movement.spin(int(movement.MAX_SPEED * 0.3))
+            # if blind_spot_ticks_left > 0:
+            #     if ticks_in_recovery % BLIND_SPOT_SWITCH_TICKS == 0:
+            #         nudge_toward_left = not nudge_toward_left
+            #     offset = -BLIND_SPOT_NUDGE_ANGLE if nudge_toward_left else BLIND_SPOT_NUDGE_ANGLE
+            #     movement.move(vision.ball_angle + offset, BLIND_SPOT_NUDGE_SPEED)
+            #     blind_spot_ticks_left -= 1
+            #     ticks_in_recovery += 1
+            # else:
+            movement.spin(int(movement.MAX_SPEED * 0.3))
 
         was_visible = vision.ball_visible
         await asyncio.sleep(0.02)

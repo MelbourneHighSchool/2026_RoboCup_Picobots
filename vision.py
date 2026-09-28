@@ -2,7 +2,6 @@
 
 import json
 import math
-
 import cv2
 import numpy as np
 from picamera2 import Picamera2
@@ -26,15 +25,15 @@ def setup_camera():
 
     try:
         with open("calibration.json") as file:
-            cal = json.load(file)
+            calibration = json.load(file)
         picam.set_controls({
             "AeEnable": False,
             "AwbEnable": False,
-            "ExposureTime": cal["exposure_time"],
-            "AnalogueGain": cal["analogue_gain"],
-            "ColourGains": tuple(cal["colour_gains"]),
+            "ExposureTime": calibration["exposure_time"],
+            "AnalogueGain": calibration["analogue_gain"],
+            "ColourGains": tuple(calibration["colour_gains"]),
         })
-        lower, upper = np.array(cal["lower_orange"]), np.array(cal["upper_orange"])
+        lower, upper = np.array(calibration["lower_orange"]), np.array(calibration["upper_orange"])
     except FileNotFoundError:
         print("No calibration.json, using default orange")
         lower, upper = np.array([4, 120, 80]), np.array([24, 255, 255])

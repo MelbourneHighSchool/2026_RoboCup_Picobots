@@ -1,9 +1,9 @@
 """Saves a camera snapshot to deadzone_reference.jpg (vision.py doesn't use a mask right now)."""
 
 import cv2
+import vision
 from picamera2 import Picamera2
 
-import vision
 
 REFERENCE_IMAGE_PATH = "deadzone_reference.jpg"
 
