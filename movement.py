@@ -5,6 +5,7 @@ in place, and stopping. Built on top of motors.py.
 
 import math
 import motors
+from value_config import ValueConfig
 
 MAX_SPEED = 50000000
 
@@ -33,3 +34,11 @@ def stop():
     """Stops all 4 motors."""
     for driver in motors.drivers:
         driver.set_speed(0)
+
+
+def orbit_around(degree, ball_distance, speed=MAX_SPEED):
+    offset = degree + 90
+    if ball_distance < ValueConfig.orbit_distance_threshold:
+        move(offset, speed)
+    else:
+        move(degree, speed)
