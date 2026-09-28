@@ -12,6 +12,8 @@ MIN_BALL_AREA = 25  # ignore blobs smaller than this
 # Set by detect_ball()
 ball_angle = 0.0
 ball_area = 0.0
+ball_dist = 0.0
+normalised_ball_angle = 0.0
 ball_visible = False
 
 deadzone = cv2.imread('deadzone_mask.png', cv2.IMREAD_GRAYSCALE)
@@ -49,7 +51,7 @@ def read_frame(picam):
 
 def detect_ball(frame, lower, upper, distance_scale=None):
     """Find the biggest orange blob and draw a line to it."""
-    global ball_angle, ball_area, ball_visible, deadzone
+    global ball_angle, ball_area, ball_visible, ball_dist, normalised_ball_angle, deadzone
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)  # orange = white
@@ -66,15 +68,17 @@ def detect_ball(frame, lower, upper, distance_scale=None):
         if area >= MIN_BALL_AREA:
             m = cv2.moments(ball)
             bx, by = int(m["m10"] / m["m00"]), int(m["m01"] / m["m00"])  # blob centre
+            dx = bx - cx
+            dy = cy - by  # y is flipped in image coordinates
+            dist = math.hypot(dx, dy)
 
             ball_angle = math.degrees(math.atan2(bx - cx, cy - by)) % 360  # 0 = straight ahead
+            normalised_ball_angle = (ball_angle + 180) % 360 - 180  # -180 to +180
             ball_area = area
             ball_visible = True
+            ball_dist = dist
 
             cv2.drawContours(frame, [ball], -1, (0, 255, 255), 2)
             cv2.line(frame, (cx, cy), (bx, by), (255, 0, 0), 2)
-
-    print(mask.shape)
-    print(deadzone.shape)
 
     return frame

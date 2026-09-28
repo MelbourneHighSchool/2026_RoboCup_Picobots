@@ -7,7 +7,8 @@ import math
 import motors
 from value_config import ValueConfig
 
-MAX_SPEED = 50000000
+MAX_SPEED = 100000000
+SLOW_SPEED = int(MAX_SPEED * 0.1)
 
 
 def move(degree, speed=MAX_SPEED):
@@ -37,8 +38,12 @@ def stop():
 
 
 def orbit_around(degree, ball_distance, speed=MAX_SPEED):
-    offset = degree + 90
+    offset = degree - 90 if degree < 0 else degree + 90
+    orbit_factor = degree / 180
+    orbit_speed = abs(orbit_factor) * (speed)
     if ball_distance < ValueConfig.orbit_distance_threshold:
-        move(offset, speed)
+        move(offset, orbit_speed)
+        print('orbiting around the ball')
     else:
         move(degree, speed)
+        print('moving toward the ball')
