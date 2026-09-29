@@ -1,7 +1,6 @@
 """Spins 3s each way. If it drifts off the spot, check SAVED_CAL in motors.py."""
 
 import time
-
 import motors
 import movement
 

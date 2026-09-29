@@ -8,7 +8,6 @@ import motors
 from value_config import ValueConfig
 
 MAX_SPEED = 100000000
-SLOW_SPEED = int(MAX_SPEED * 0.1)
 
 
 def move_to_ball(ball_angle, ball_dist, speed=MAX_SPEED):
@@ -48,7 +47,6 @@ def orbit_around(degree, ball_distance, speed=MAX_SPEED):
 
     orbit_speed_factor = min(1.0, abs(degree) / ValueConfig.orbit_full_speed_angle)
     orbit_speed = int(speed * orbit_speed_factor)
-
 
     if ball_distance < ValueConfig.orbit_distance_threshold:
         move_to_ball(offset, orbit_speed)

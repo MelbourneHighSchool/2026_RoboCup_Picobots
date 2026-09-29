@@ -1,7 +1,6 @@
 """Drives straight for 3s. If it curves, check SAVED_CAL in motors.py."""
 
 import time
-
 import motors
 import movement
 
