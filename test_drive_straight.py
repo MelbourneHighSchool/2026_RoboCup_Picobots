@@ -12,7 +12,7 @@ motors.setup_motors()
 print(f"Driving straight for {DRIVE_SECONDS}s, Ctrl+C to stop")
 
 try:
-    movement.move(0, TEST_SPEED)
+    movement.move_to_ball(0, TEST_SPEED)
     time.sleep(DRIVE_SECONDS)
 finally:
     movement.stop()  # runs even on Ctrl+C

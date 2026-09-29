@@ -11,12 +11,15 @@ MAX_SPEED = 100000000
 SLOW_SPEED = int(MAX_SPEED * 0.1)
 
 
-def move(degree, speed=MAX_SPEED):
+def move_to_ball(ball_angle, ball_dist, speed=MAX_SPEED):
     """
     Drives the robot toward `degree` (0 = the direction the camera faces),
     using trig to work out how fast each of the 4 wheels needs to spin.
     """
-    angle_rad = math.radians(degree + 90)
+    speed_factor = ball_dist / ValueConfig.move_distance_factor
+    speed = int(speed * speed_factor)
+    
+    angle_rad = math.radians(ball_angle + 90)
     x = math.floor(math.cos(angle_rad) * speed)
     y = math.floor(math.sin(angle_rad) * speed)
     motors.drivers[0].set_speed(y + x)       # FR
@@ -39,11 +42,17 @@ def stop():
 
 def orbit_around(degree, ball_distance, speed=MAX_SPEED):
     offset = degree - 90 if degree < 0 else degree + 90
-    orbit_factor = degree / 180
-    orbit_speed = abs(orbit_factor) * (speed)
+
+    move_speed_factor = ball_distance / ValueConfig.move_distance_factor
+    move_speed = int(speed * move_speed_factor)
+
+    orbit_speed_factor = min(1.0, abs(degree) / ValueConfig.orbit_full_speed_angle)
+    orbit_speed = int(speed * orbit_speed_factor)
+
+
     if ball_distance < ValueConfig.orbit_distance_threshold:
-        move(offset, orbit_speed)
+        move_to_ball(offset, orbit_speed)
         print('orbiting around the ball')
     else:
-        move(degree, speed)
+        move_to_ball(degree, move_speed)
         print('moving toward the ball')

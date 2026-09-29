@@ -63,7 +63,7 @@ async def motor_task():
 
     while True:
         if vision.ball_visible:
-            movement.orbit_around(vision.normalised_ball_angle, vision.ball_dist, speed=movement.MAX_SPEED)
+            movement.orbit_around(vision.normalised_ball_angle, vision.ball_dist, move_speed=movement.MAX_SPEED)
             print('ball is visible')
             print(f'ball angle: {vision.normalised_ball_angle}, ball distance: {vision.ball_dist}')
             blind_spot_ticks_left = 0
