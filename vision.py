@@ -55,7 +55,7 @@ def detect_ball(frame, lower, upper, distance_scale=None):
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)  # orange = white
-    # mask = cv2.bitwise_and(deadzone, mask, mask=None)
+    mask = cv2.bitwise_and(deadzone, mask, mask=None)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     height, width = frame.shape[:2]
