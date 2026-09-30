@@ -8,6 +8,7 @@ from picamera2 import Picamera2
 
 CAMERA_RESOLUTION = (1024, 768)
 MIN_BALL_AREA = 25  # ignore blobs smaller than this
+MIN_GOAL_AREA = 50  # ignore blobs smaller than this
 
 # Set by detect_ball()
 ball_angle = 0.0
@@ -15,6 +16,16 @@ ball_area = 0.0
 ball_dist = 0.0
 normalised_ball_angle = 0.0
 ball_visible = False
+ballx_pos = 0.0
+bally_pos = 0.0
+
+goal_angle = 0.0
+goal_area = 0.0
+goal_dist = 0.0
+normalised_goal_angle = 0.0
+goal_visible = False
+goalx_pos = 0.0
+goaly_pos = 0.0
 
 deadzone = cv2.imread('deadzone_mask.png', cv2.IMREAD_GRAYSCALE)
 
@@ -35,12 +46,14 @@ def setup_camera():
             "AnalogueGain": calibration["analogue_gain"],
             "ColourGains": tuple(calibration["colour_gains"]),
         })
-        lower, upper = np.array(calibration["lower_orange"]), np.array(calibration["upper_orange"])
+        lower_orange, upper_orange = np.array(calibration["lower_orange"]), np.array(calibration["upper_orange"])
+        lower_yellow, upper_yellow = np.array(calibration["lower_yellow"]), np.array(calibration["upper_yellow"])
     except FileNotFoundError:
         print("No calibration.json, using default orange")
-        lower, upper = np.array([4, 120, 80]), np.array([24, 255, 255])
+        lower_orange, upper_orange = np.array([4, 120, 80]), np.array([24, 255, 255])
+        lower_yellow, upper_yellow = np.array([20, 100, 100]), np.array([30, 255, 255])
 
-    return picam, lower, upper, None  # main.py wants 4 values
+    return picam, lower_orange, upper_orange, lower_yellow, upper_yellow  # main.py wants 5 values
 
 
 def read_frame(picam):
@@ -49,9 +62,9 @@ def read_frame(picam):
     return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 
-def detect_ball(frame, lower, upper, distance_scale=None):
+def detect_ball(frame, lower, upper):
     """Find the biggest orange blob and draw a line to it."""
-    global ball_angle, ball_area, ball_visible, ball_dist, normalised_ball_angle, deadzone
+    global ball_angle, ball_area, ball_visible, ball_dist, ballx_pos, bally_pos, normalised_ball_angle, deadzone
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)  # orange = white
@@ -77,8 +90,47 @@ def detect_ball(frame, lower, upper, distance_scale=None):
             ball_area = area
             ball_visible = True
             ball_dist = dist
+            ballx_pos = ball_dist * math.sin(math.radians(ball_angle))
+            bally_pos = ball_dist * math.cos(math.radians(ball_angle))
 
-            cv2.drawContours(frame, [ball], -1, (0, 255, 255), 2)
+            cv2.drawContours(frame, [ball], -1, (255, 0, 0), 2)
             cv2.line(frame, (cx, cy), (bx, by), (255, 0, 0), 2)
+
+    return frame
+
+
+
+def detect_goal(frame, lower, upper):
+    """Find the biggest yellow blob and draw a line to it."""
+    global goal_angle, goal_area, goal_visible, goal_dist, goalx_pos, goaly_pos, normalised_goal_angle
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, lower, upper)  # yellow = white
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    height, width = frame.shape[:2]
+    cx, cy = width // 2, height // 2
+    goal_visible = False
+
+    if contours:
+        goal = max(contours, key=cv2.contourArea)
+        area = cv2.contourArea(goal)
+        if area >= MIN_GOAL_AREA:
+            m = cv2.moments(goal)
+            bx, by = int(m["m10"] / m["m00"]), int(m["m01"] / m["m00"])  # blob centre
+            dx = bx - cx
+            dy = cy - by  # y is flipped in image coordinates
+            dist = math.hypot(dx, dy)
+
+            goal_angle = math.degrees(math.atan2(bx - cx, cy - by)) % 360  # 0 = straight ahead
+            normalised_goal_angle = (goal_angle + 180) % 360 - 180  # -180 to +180
+            goal_area = area
+            goal_visible = True
+            goal_dist = dist
+            goalx_pos = goal_dist * math.sin(math.radians(goal_angle))
+            goaly_pos = goal_dist * math.cos(math.radians(goal_angle))
+
+            cv2.drawContours(frame, [goal], -1, (128, 0, 128), 2)
+            cv2.line(frame, (cx, cy), (bx, by), (128, 0, 128), 2)
 
     return frame

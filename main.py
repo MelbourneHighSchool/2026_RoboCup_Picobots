@@ -35,11 +35,12 @@ async def ws_handler(ws):
         clients.remove(ws)
 
 
-async def stream_cam(picam, lower, upper, distance_scale):
+async def stream_cam(picam, lower_orange, upper_orange, lower_yellow, upper_yellow):
     """Find the ball and send each frame to the browser."""
     while True:
         frame = vision.read_frame(picam)
-        frame = vision.detect_ball(frame, lower, upper, distance_scale)
+        frame = vision.detect_ball(frame, lower_orange, upper_orange)
+        frame = vision.detect_goal(frame, lower_yellow, upper_yellow)
 
         # Only shrink the copy we send
         stream_height = int(frame.shape[0] * STREAM_WIDTH / frame.shape[1])
@@ -63,25 +64,15 @@ async def motor_task():
 
     while True:
         if vision.ball_visible:
-            movement.orbit_around(vision.normalised_ball_angle, vision.ball_dist, speed=movement.MAX_SPEED)
+            movement.orbit_around(vision.normalised_ball_angle, vision.ball_dist, vision.normalised_goal_angle, speed=movement.MAX_SPEED)
             print('ball is visible')
             print(f'ball angle: {vision.normalised_ball_angle}, ball distance: {vision.ball_dist}')
+            # print(f'ballx: {vision.ballx_pos}, bally: {vision.bally_pos}')
+            print(f'goal angle: {vision.normalised_goal_angle}, goal distance: {vision.goal_dist}')
+            # print(f'goalx: {vision.goalx_pos}, goaly: {vision.goaly_pos}')
             blind_spot_ticks_left = 0
 
         else:
-            # if was_visible and vision.ball_area > BLIND_SPOT_AREA_THRESHOLD:
-            #     # Probably went under the plate
-            #     blind_spot_ticks_left = BLIND_SPOT_MAX_TICKS
-            #     ticks_in_recovery = 0
-
-            # if blind_spot_ticks_left > 0:
-            #     if ticks_in_recovery % BLIND_SPOT_SWITCH_TICKS == 0:
-            #         nudge_toward_left = not nudge_toward_left
-            #     offset = -BLIND_SPOT_NUDGE_ANGLE if nudge_toward_left else BLIND_SPOT_NUDGE_ANGLE
-            #     movement.move(vision.ball_angle + offset, BLIND_SPOT_NUDGE_SPEED)
-            #     blind_spot_ticks_left -= 1
-            #     ticks_in_recovery += 1
-            # else:
             movement.spin(movement.SLOW_SPEED)
             print('ball is not visible')
 
@@ -91,15 +82,15 @@ async def motor_task():
 
 async def main():
     motors.setup_motors()
-    picam, lower_orange, upper_orange, distance_scale = vision.setup_camera()
+    picam, lower_orange, upper_orange, lower_yellow, upper_yellow = vision.setup_camera()
 
     # Frames are already JPEGs, no point compressing again
     server = await websockets.serve(ws_handler, "0.0.0.0", 8765, compression=None)
     print("Streaming on port 8765, open camera.html")
     print("Ctrl+C to stop")
 
-    await asyncio.gather(
-        stream_cam(picam, lower_orange, upper_orange, distance_scale),
+    await asyncio.gather(   
+        stream_cam(picam, lower_orange, upper_orange, lower_yellow, upper_yellow),
         motor_task(),
     )
     await server.wait_closed()
