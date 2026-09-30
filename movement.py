@@ -5,10 +5,21 @@ in place, and stopping. Built on top of motors.py.
 
 import math
 import motors
+import vision
 from value_config import ValueConfig
 
 MAX_SPEED = 100000000
 SLOW_SPEED = int(MAX_SPEED * 0.1)
+
+unit_x = (vision.goalx_pos - vision.ballx_pos) / vision.ball_to_goal_distance
+unit_y = (vision.goaly_pos - vision.bally_pos) / vision.ball_to_goal_distance
+
+target_x = vision.ballx_pos - unit_x * ValueConfig.orbit_distance_threshold
+target_y = vision.bally_pos - unit_y * ValueConfig.orbit_distance_threshold
+
+desired_bearing = math.degrees(math.atan2(target_x - vision.ballx_pos, target_y - vision.bally_pos)) % 360
+current_bearing = math.degrees(math.atan2(0 - vision.ballx_pos, 0 - vision.bally_pos)) % 360
+normalised_bearing_error = (desired_bearing - current_bearing + 180) % 360 - 180
 
 
 def move_to_ball(ball_angle, ball_dist, goal_angle, speed=MAX_SPEED):
@@ -16,10 +27,10 @@ def move_to_ball(ball_angle, ball_dist, goal_angle, speed=MAX_SPEED):
     Drives the robot toward `ball_angle` (0 = the direction the camera faces),
     using trig to work out how fast each of the 4 wheels needs to spin.
     """
-    speed_factor = ball_dist / ValueConfig.move_distance_factor
+    speed_factor = ball_dist / ValueConfig.chase_speed_factor
     speed = int(speed * speed_factor)
 
-    rotation_speed_factor = min(1.0, abs(goal_angle) / ValueConfig.orbit_angle_tolerance)
+    rotation_speed_factor = min(1.0, abs(goal_angle) / ValueConfig.rotation_full_speed_angle)
     rotation_speed = int((speed * rotation_speed_factor if goal_angle < 0 else -speed * rotation_speed_factor) * 0.4)
     
     angle_rad = math.radians(ball_angle + 90)
@@ -44,16 +55,16 @@ def stop():
 
 
 def orbit_around(ball_angle, ball_dist, goal_angle, speed=MAX_SPEED):
-    offset = ball_angle - 90 if ball_angle < 0 else ball_angle + 90
+    offset = ball_angle - 90 if normalised_bearing_error < 0 else ball_angle + 90
 
-    move_speed_factor = ball_dist / ValueConfig.move_distance_factor
+    move_speed_factor = ball_dist / ValueConfig.chase_speed_factor
     move_speed = int(speed * move_speed_factor)
 
-    orbit_speed_factor = min(1.0, abs(ball_angle) / ValueConfig.orbit_full_speed_angle)
+    orbit_speed_factor = min(1.0, abs(normalised_bearing_error) / ValueConfig.orbit_full_speed_angle)
     orbit_speed = int(speed * orbit_speed_factor)
 
     is_possession = (ball_dist < ValueConfig.orbit_distance_threshold 
-                     and abs(goal_angle) < ValueConfig.orbit_angle_tolerance
+                     and abs(goal_angle) < ValueConfig.goal_angle_tolerance
                      and abs(ball_angle) < ValueConfig.ball_angle_tolerance)
 
     if is_possession:

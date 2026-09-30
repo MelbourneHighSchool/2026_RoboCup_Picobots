@@ -4,8 +4,10 @@ from dataclasses import dataclass
 class ValueConfig:
     """A dataclass to hold configuration values for the Picobot."""
     orbit_distance_threshold: float = 320
-    move_distance_factor: float = orbit_distance_threshold * 1.2
-    orbit_full_speed_angle: int = 45
+    chase_speed_factor: float = orbit_distance_threshold * 1.2
+
+    orbit_full_speed_angle: int = 40
     rotation_full_speed_angle: int = 23
-    orbit_angle_tolerance: int = 5
+
+    goal_angle_tolerance: int = 5
     ball_angle_tolerance: int = 2
