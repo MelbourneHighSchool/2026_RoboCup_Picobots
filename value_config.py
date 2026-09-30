@@ -7,7 +7,7 @@ class ValueConfig:
     chase_speed_factor: float = orbit_distance_threshold * 1.2
 
     orbit_full_speed_angle: int = 40
-    rotation_full_speed_angle: int = 23
+    rotation_full_speed_angle: int = 20
 
-    goal_angle_tolerance: int = 5
-    ball_angle_tolerance: int = 2
+    goal_angle_tolerance: int = 15
+    ball_angle_tolerance: int = 12

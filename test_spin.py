@@ -6,7 +6,7 @@ import movement
 
 SPIN_SECONDS = 3
 PAUSE_SECONDS = 1
-TEST_SPEED = int(movement.MAX_SPEED * 0.3)
+TEST_SPEED = movement.SLOW_SPEED
 
 motors.setup_motors()
 print(f"Spinning {SPIN_SECONDS}s each way, Ctrl+C to stop")
